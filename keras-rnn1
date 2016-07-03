@@ -1,0 +1,101 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun May 22 20:39:54 2016
+
+@author: max
+"""
+
+import keras as k
+from keras.activations import *
+from keras.layers import *
+from keras.models import *
+from keras.optimizers import *
+from keras.utils import np_utils
+import numpy as np
+
+
+y_train = np.array([1. for j in range(1000)],dtype=np.float32)
+
+x_train = np.array([[[1. for i in range(1)] for j in range(10)] for k in range(1000)],dtype=np.float32)
+
+for i in range(1000):
+    for j in range(10):
+        x_train[i][j] = j+i  # from 0~999
+    
+for i in range(1000):
+        y_train[i] = i+10.0  # from 1~1000
+    
+    
+y_test = np.array([1 for j in range(100)],dtype=np.float32)
+x_test = np.array([[[1 for i in range(1)] for j in range(10)] for k in range(100)],dtype=np.float32)
+
+for i in range(500,600):
+    for j in range(10):
+        x_test[i-500][j] = i+j  # from 500~599
+    
+for i in range(500,600):
+        y_test[i-500] = i+10.0  # from 501~600
+        
+        
+#x_train = x_train.astype('float32')
+#x_test = x_test.astype('float32')
+#
+#y_train = y_train.astype('float32')
+#y_test = y_test.astype('float32')
+    
+x_train = x_train/100.0
+x_test = x_test/100.0
+
+y_train = y_train/100.0
+y_test = y_test/100.0
+
+
+
+print "Building..."
+model = Sequential()
+
+g_layer = LSTM(output_dim=512, input_shape = (10,1), return_sequences=True,stateful=True,batch_input_shape=(10, 10, 1))
+model.add(g_layer) 
+model.add(Dropout(0.1)) 
+model.add(LSTM(output_dim=128, return_sequences=True,stateful=True))
+model.add(Dropout(0.1)) 
+model.add(LSTM(output_dim=128, return_sequences=True,stateful=True))
+model.add(Dropout(0.1)) 
+model.add(LSTM(output_dim=128, return_sequences=False,stateful=True))
+model.add(Dense(1))
+model.add(Activation("linear"))
+
+print "Compiling...."
+#compile,metrics=['accuracy']to display accuracy
+#sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
+#model.compile(optimizer=sgd,loss='mse')
+
+model.compile(loss="mse", optimizer = 'rmsprop')
+
+#train
+
+print "Training..."
+#history = model.fit(x_train,y_train,nb_epoch=30,batch_size=10,verbose=1,validation_data=(x_test,y_test))
+h = model.fit(x_train,y_train,nb_epoch=30,batch_size=10,verbose=1,validation_split=0.1)
+
+
+print "Evaluating..."
+#score = model.evaluate(x_test,y_test)
+#print score
+
+x = np.array([[[1.0 for i in range(1)] for j in range(10)] for k in range(10)],dtype=np.float32)
+
+for j in range(10):   
+    for i in range(77,87):
+        x[j][i-77] = i
+
+#x = x.astype('float32')
+x = x/100.0
+    
+print 'Prediting...'
+pre = model.predict_on_batch(x)
+
+pre1 = model.predict(x_test,batch_size=10)
+
+
+
